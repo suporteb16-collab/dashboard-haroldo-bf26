@@ -1,0 +1,4 @@
+# nada de export cru da planilha aqui: a aba `vendas` tem CPF, e-mail,
+# telefone e chave PIX dos compradores, e este repositório é público.
+*.csv
+vendas*.json

@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Black Friday 26 | Haroldo Lourenço</title>
+<meta name="description" content="Dashboard da Black Friday 2026 de Haroldo Lourenço — investimento em mídia e vendas do Prática na Advocacia Imobiliária 3.0.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ---------------------------------------------------------------
+   Paleta clássica B16 (a mesma do dashboard AAEMCWEB / Mundial Cromo).
+   2 slots categóricos: amarelo = investido, azul = lead pago / dinheiro.
+   Cinza (--muted) = o que não é pago. O amarelo fica abaixo de 3:1 no
+   claro de propósito — é a cor da marca — e por isso toda barra leva
+   rótulo direto: a leitura nunca depende só da cor.
+   --------------------------------------------------------------- */
+:root{
+  color-scheme: light;
+  --plane:#f4f4f2; --surface:#fff; --surface2:#f9f9f7;
+  --border:#e5e5e0; --border2:#d0d0c8;
+  --yellow:#d4a800; --yellow-bg:#fff9e0;
+  --black:#111; --text:#1a1a1a; --muted:#777;
+  --grid:#e5e5e0; --baseline:#d0d0c8;
+  --cat1:#d4a800; --cat2:#3b82f6; --neutro:#b9b9b1;
+  --good:#16a34a; --warn:#e08a00; --critical:#d03b3b;
+  --shadow:0 1px 2px rgba(17,17,17,.04), 0 2px 8px rgba(17,17,17,.05);
+}
+html.dark{
+  color-scheme: dark;
+  --plane:#0d0d0d; --surface:#1a1a1a; --surface2:#222;
+  --border:#2a2a2a; --border2:#333;
+  --yellow:#d4a800; --yellow-bg:rgba(212,168,0,.08);
+  --black:#f0f0f0; --text:#e8e8e8; --muted:#888;
+  --grid:#2a2a2a; --baseline:#333;
+  --cat1:#b08c00; --cat2:#3b82f6; --neutro:#55554f;
+  --good:#22c55e; --warn:#fab219; --critical:#e05555;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 2px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--plane); color:var(--text);
+  font-family:"DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+.wrap{max-width:1220px; margin:0 auto; padding:20px 16px 64px}
+
+header.top{
+  display:flex; flex-wrap:wrap; gap:14px; align-items:flex-end; justify-content:space-between;
+  padding:18px 0 16px; border-bottom:1px solid var(--border); margin-bottom:20px;
+}
+.brand-row{display:flex; align-items:center; gap:13px}
+.logo{width:44px; height:44px; border-radius:50%; object-fit:cover; display:block; flex:0 0 44px}
+.brand .kicker{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:4px}
+.brand h1{font-family:"Bebas Neue","DM Sans",sans-serif; font-weight:400; font-size:clamp(30px,4.6vw,44px); line-height:1; letter-spacing:.012em; margin:0; color:var(--black)}
+.brand .sub{color:var(--muted); font-size:13.5px; margin-top:6px}
+.brand .sub b{color:var(--text); font-weight:500}
+.fase-chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:var(--black); background:var(--yellow-bg); border:1px solid var(--cat1); border-radius:999px; padding:1px 10px; margin-left:4px; white-space:nowrap}
+.tools{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.btn{font:inherit; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:7px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px}
+.btn:hover{background:var(--surface2)}
+.btn:disabled{opacity:.6; cursor:progress}
+.lido{font-size:12px; color:var(--muted); white-space:nowrap}
+.lido.ok{color:var(--good)} .lido.falha{color:var(--critical)}
+.seg{display:inline-flex; background:var(--surface); border:1px solid var(--border2); border-radius:8px; overflow:hidden}
+.seg button{font:inherit; font-size:13px; border:0; background:transparent; color:var(--muted); padding:7px 12px; cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--black); color:var(--surface); font-weight:500}
+.dtr{display:none; flex-basis:100%; align-items:center; gap:8px; flex-wrap:wrap; font-size:13px; color:var(--muted)}
+.dtr.on{display:flex}
+.dtr label{display:inline-flex; align-items:center; gap:6px}
+.dtr input[type="date"]{font:inherit; font-size:13px; color:var(--text); background:var(--surface); border:1px solid var(--border2); border-radius:8px; padding:6px 9px}
+.dtr .aviso{color:var(--warn)}
+
+.note{display:flex; gap:10px; align-items:flex-start; border:1px solid var(--border); border-left:3px solid var(--muted); background:var(--surface); border-radius:8px; padding:11px 14px; margin-bottom:12px; font-size:13.5px; color:var(--muted); box-shadow:var(--shadow)}
+.note b{color:var(--text); font-weight:500}
+.note .ic{flex:none}
+.note.warn{border-left-color:var(--warn)}
+.note.crit{border-left-color:var(--critical)}
+.note.info{border-left-color:var(--cat2)}
+.note.pending{border-left-color:var(--warn)}
+.note code{font-family:ui-monospace,Menlo,monospace; font-size:12.5px; background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:1px 5px}
+
+section{margin:30px 0 0}
+.sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:0 0 12px; flex-wrap:wrap}
+h2{font-family:"Bebas Neue","DM Sans",sans-serif; font-weight:400; font-size:23px; letter-spacing:.03em; margin:0; color:var(--black)}
+.sec-head .hint{font-size:12.5px; color:var(--muted)}
+
+.kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(172px,1fr)); gap:12px}
+.kpi{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:15px 16px 14px; box-shadow:var(--shadow); min-width:0}
+.kpi .lab{font-size:11px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:7px; display:block}
+.kpi .val{font-size:29px; font-weight:700; line-height:1.05; letter-spacing:-.02em; color:var(--black)}
+.kpi .val.sm{font-size:22px}
+.kpi .foot{font-size:12.5px; color:var(--muted); margin-top:6px}
+.kpi.hero{background:var(--black); border-color:var(--black)}
+.kpi.hero .lab{color:rgba(255,255,255,.6)}
+.kpi.hero .val{color:#fff; font-size:38px}
+.kpi.hero .foot{color:rgba(255,255,255,.75)}
+html.dark .kpi.hero{background:var(--surface2); border-color:var(--border2)}
+html.dark .kpi.hero .lab{color:var(--muted)}
+html.dark .kpi.hero .val{color:var(--black)}
+html.dark .kpi.hero .foot{color:var(--muted)}
+.kpi.empty .val{color:var(--muted); font-weight:500}
+.flag{display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; border-radius:999px; padding:2px 9px; margin-top:8px; border:1px solid currentColor}
+.flag:empty{display:none}
+.flag.crit{color:var(--critical)} .flag.warn{color:var(--warn)} .flag.good{color:var(--good)}
+.kpi.hero .flag{background:rgba(255,255,255,.10)}
+
+.grid{display:grid; gap:14px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(min(330px,100%),1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(min(260px,100%),1fr))}
+.card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 18px 14px; box-shadow:var(--shadow); min-width:0}
+.card h3{font-size:14px; font-weight:500; margin:0 0 3px; color:var(--black)}
+.card .cap{font-size:12.5px; color:var(--muted); margin:0 0 14px}
+.plot{position:relative; height:250px}
+.plot.tall{height:320px}
+.plot.short{height:200px}
+
+.leg{display:flex; flex-wrap:wrap; gap:14px; margin:12px 0 0; font-size:12.5px; color:var(--muted)}
+.leg span{display:inline-flex; align-items:center; gap:6px}
+.leg i{width:11px; height:11px; border-radius:3px; display:inline-block; flex:none}
+.leg i.linha{height:0; border-top:2px dashed var(--muted); border-radius:0; width:16px}
+
+/* Funil em trapézio (padrão B16): a magnitude está na LARGURA, não na cor. O texto é
+   #111 literal porque o amarelo é o mesmo nos dois temas. A última faixa usa #2563eb,
+   fundo o bastante para texto branco passar em 4,5:1. */
+.funil{display:flex; flex-direction:column; align-items:center; margin-top:4px}
+.ftrap{background:var(--yellow); border-radius:4px; display:flex; align-items:center; justify-content:space-between;
+       gap:14px; padding:0 20px; height:60px; margin:0 auto; min-width:250px; max-width:100%;
+       clip-path:polygon(3% 0%, 97% 0%, 100% 100%, 0% 100%)}
+.ftrap.fim{background:#2563eb}
+.ft-left{display:flex; flex-direction:column; min-width:0}
+.ft-name{font-size:10px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:rgba(17,17,17,.62); white-space:nowrap}
+.ft-val{font-family:"Bebas Neue","DM Sans",sans-serif; font-size:29px; line-height:1; color:#111; letter-spacing:.01em}
+.ft-right{text-align:right; white-space:nowrap}
+.ft-cost{font-family:"Bebas Neue","DM Sans",sans-serif; font-size:23px; line-height:1; color:#111}
+.ft-cost-lbl{font-size:10px; color:rgba(17,17,17,.62); margin-top:3px}
+.ftrap.fim .ft-name, .ftrap.fim .ft-cost-lbl{color:rgba(255,255,255,.75)}
+.ftrap.fim .ft-val, .ftrap.fim .ft-cost{color:#fff}
+.fc{display:flex; flex-direction:column; align-items:center; margin:3px auto}
+.fc-line{width:2px; height:11px; background:var(--border2)}
+.fc-tag{background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-size:10.5px;
+        font-weight:500; padding:3px 11px; border-radius:20px; white-space:nowrap}
+@media (max-width:520px){
+  .ftrap{height:52px; padding:0 13px; gap:8px}
+  .ft-val{font-size:23px} .ft-cost{font-size:18px}
+  .ft-cost-lbl,.ft-name{font-size:9px}
+}
+
+.tw{overflow-x:auto; border:1px solid var(--border); border-radius:10px; background:var(--surface); box-shadow:var(--shadow)}
+table{border-collapse:collapse; width:100%; font-size:13px; min-width:720px}
+th,td{padding:9px 13px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; vertical-align:middle}
+th{font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:500; background:var(--surface2); position:sticky; top:0}
+td.n{text-align:right; font-variant-numeric:tabular-nums}
+th.n{text-align:right}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--surface2)}
+td.wrap-ok{white-space:normal; min-width:210px}
+.cri{display:flex; align-items:center; gap:10px}
+.thumb{width:40px; height:40px; border-radius:6px; object-fit:cover; background:var(--surface2); border:1px solid var(--border); flex:none}
+.pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:500; border-radius:999px; padding:2px 9px; border:1px solid var(--border2)}
+.pill.good{color:var(--good)} .pill.wait{color:var(--warn)} .pill.ref{color:var(--critical)} .pill.mut{color:var(--muted)}
+
+#loading,#erro{padding:38px 0; text-align:center; color:var(--muted); font-size:14px}
+#erro{color:var(--critical)}
+.hidden{display:none !important}
+footer{margin-top:44px; padding-top:16px; border-top:1px solid var(--border); font-size:12.5px; color:var(--muted); display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between}
+footer .links a{margin-right:12px}
+@media (max-width:640px){ .plot{height:225px} .kpi .val{font-size:25px} .kpi.hero .val{font-size:32px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-row">
+        <img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABcoSURBVHhe7V0JdFRFug4kJITIGsISQDYDDgqyZukEiOK4KwoKiLKI7ALv6bg8x3kjCLLJIouA7KsgCoIIgzzHGT2jow6iYQchCJIN0jcrS3r73vmrblXfVN/udGeRJalzvtNJ31q/r+qv5VZVB7lcztMul8vqcjkrHE6nw+p02K0Oh83qsNusDoedfcfTd6MwT7Omnjxm3bxhtXX+rBnWiWNHWy3dOltjWjaztmnR1No4sr61bkS4tVZYKAP9Td/RM/JDfikMhd2yfrU19eRxa2G+5pEOpS3y4nQQRH48817+YJyfDnK5nIW4DlzqL8ewftX7mDhuNOK73oXoRg0RHBSEIBNUDwpCNf3T+LfqjxASFMTiiuvaGRPHjmZpnPnluJr8NXHEPQmg6f9WIFhicDntxTJw9NBPeGf6VCQnWVCnVk0P8ohYI9EqSCCC+r1RGIIaL6VFac6ePpXlwegoj5RXzzKUNxgn2u8kAIG7wvxcfLhpHfo+eB9qh4d51GxGbDU3wSrhKskqVD/ifxEnwZgm5aHvQ/dh66b1KMzLkfn0zH95owIEcDrscDkdVI3Yp5P+1p12MQvvLZiPzh3vMCX9WsGYF8ob5ZHyKpyxTE6nnf2vlrt0qAABqOk67DZ3pgEU5OVg6aJ30e62NrKgvszKtYBoJSJ/lFfKc0Eup8blcrAyUdl4uTzLHjgqSABBPLntWzah+113yoJRQUMMpuB6A+XN2PFT3rdt2STLQ2Urv/6hnAUwEv/r6ZMY+vQA2QHSp+gwjbb4eoPMo9J5D3l6AM6mnpTlK59WUA4CCJPjsBXJzG1csxLNm0RdNza+rBDlaNEkChvXrpLldNiL4HDYytAiyiwA76Dstqvs7/wcDSOHPlPM3KiFuVERXK2aLNfzQwcjL8fKykxlp465tPyVWQBhdo4fPojEhDg3+botVQtyI4MmdKJ8SQlxrMycg99ZABoRsGbn4pHs+2wnmjdpJM2NsPM3mwDUCgj0NzNJTRth3+6dknw2AAnIHJVCAErATvaeJQRs2bgWEfpkKkTPXGUAlZXKfEt4GDZvWKuL4GR9of8ilFIAMblav2YlagRXl+SL2lEZQGUVIhAHG9au5BLQ/KfiBKAPXvPXr16BkOp6BqpXk0M3NaM3K0R5hQghwdUYJ0aOPPlT4acA3ObzqTi5LRvXyZp/M9r6QEDlp8mbaAnEjc6sXI5R+QxIAGZyHHY47Xycv2fHxwgPC610Nt8XjC2BuNm942PGldOhL8l4NUl+CkATDnInjhxE06hIXvMrmckpCWKERNxER0UyrsgRd2USQHjMyb4AS2wPWfNZp2uSkcoKZoqpL9TNkSWuO3KsFzitHnyWIACz+bSULJddIWe4asJVcEN93zBy6GApAM2W+UKesU/wJgB5lAIAH6xbJcmvqvUlg3Gkt4TN61ZzZtlbNhrIBCAAuTOnTqBJwwbuEc91vJJ5vcDYKTeJaoBfT53QRRC8+hSAptNuAQY/+URVp1sKiD6SuCMO3QLY9eG8NwH0YSe5T7d9yCK43t5e3UgQmwKIS3KMW58CMBFcuFxYgK4dO1R1vOUA4pC4JE7d5sebAPpsd83ypVW1v5wg3qytWbFUp9lbC9CXl/NzNXSIaSttvxphFQKD6As6tGvLuJWVXQjgdDrYtzR1Jrd6+ZKq2l/OEK1g9fvvMY4F18R9kMvFBaAp86WCPHTrxG1/1cinfCB4FH3BpYJcfXmCODcIQG7nx1tkx1tFfvlBcEncEsfC6QLwPsDpcGBgv7689pdxwlUlnifEOhFxTFzrVocEcDEBThxJQd2I8DINPcUskG1wMhFRzKYr09szI4jburXC5WppMQEWzZ1VJvIJxmm4N5A/eptmJlBlAHFAXHMBXNwE0TT5/rt7lVkAqvnU49eNCEWv2MboHdcIvWI5xN+1w0PZYpWZAKpYZlDDeIMaToXqvySYbXNX/fgDCnd/ck99aUJvAZnnz6JBnVtKHamAsHND+jeHI8+Cqxk9UZSehKtpSXBo9+DgV0mICOdv1Lz1E2YF9QZfpsxbPGJ5gOXXJJz4Xq0gahw1a9TwCOcPKDxxTZzrLcClbd24lj1QPQcKUeiNS7sARUlwZMXDmZkAZ6YFKOqJeVNiZDrGwotw454fhn/u24O9n27H57s+wee76JNj32c78Nn2rZg7cxoe6JOMiNAakgyzPLwwcji+3PsZi2fvp9tYnHt3bsOXe3dj9HNDfJZXmFLRZ5HfSePH4O97dmHvzu34+ou9GPfcsz7j8AaRP+KcC+B0ai9OHFeqyFRQHFH1wnHuUGfAmghbejzsGYlwZCbAnp2Ie3vyPaNqOJEp2pvvl3M5sf+H75Dc0+IRn4hryfx31FDSvTtntmlFEBAtQJDfteMduFKYL8PTG8K2LVuwZ2bhSwKFe2nCeN4JXy7I0yzdOpc6MjXi/g83gys/AY5MC4rSE3A1vQegJeL4txZE1DQ3P4K0OTPfZgV077f05vhU/urlAjz0x3tYWNESRFzLFsxRA8lws95+S+ZDzYsAkU9x0babf+z7Gwsn9kQNf2YQD+/DBHoDpUdhLd0743JBjhZ0/tdUrUXTxh41KVBQeFbw2XcClxJxNT0WtrREFKX1YP8vmclPxqgmgyBImzt7BqfJ5YTt6mUsmDMLf3pxEl59+SW8/spLWL1sMdJ/O8vJ0JfNTx49iIb163rkPymuB8aPHokRQ59ln1npaboIbgHIn5kA4jvyM2nsKBmO3CdbN8t+RO0n/AXFS5wT90HbNm/QSEkzYgIBRVq7VhiOf9sVyE5AEZmfzFjY05PgtFrQ9z7vIgsB5ukCkCvIyUZMi2gprEDzpo2xa/tH3JNeIyeMed4jbjXckRT3YTyjAGYQtbTtrc1xMdMtXFZGGmJat/QZ1h9w8aph25YNWtDCee9oZYnQWFv+2CsKjuxEFKXHwZZBIsTBlZ2AMwcSEFm3lteMmwlQmGtF1zv/IMMY02kV3Rg52e5zXJvWrGDfGyuR0X94jRC5m5nczLeneM2LMT8fb97IA+grxRPHjvJIp7SgeBj3L//3RCaAWVP0F9KETIkBCpJx+XwcbGkJKDofDxQkYsN77mNKalhjeKMAl/JzpAAib/Qp/O7ZobcCAAe+/xah+m49NW4pwJFD0n9JLYCeDer/OPMrFs7+b8+nPssQCEQLY9zfY4ktswCskKGhOPh1DyDXgqtpcbClJ8CeEQ8U9sawp5r5zLiZAIV5GrqZCCBI2LZ5g/R77NDPCK8RbJoGfVeTCWBsAZ4CUNxiFt+4YQOcTT3FPbtc+O3MKbS9lZfBCBHOGIeavhlEOe6xxGlB7Vu3KJMAIrKkHpGwZfWEMzMe9vQENgTFxSRcPBGHFo29mx+CqQD5WrEWYNx9Vu+WWjh3RieIVnH1jtEsDX8EEOSL+Je/t5D5o+3mNPI5fOAHrF+xDHt2bsOsqW/iqccfQ90IXiZhzzk80zeD4Ixxf1vLZrIPKI0IYqw8+ZUY4AqN/Yl8DhRY8MlaMj+8YGpYATMBCnKzEWNS62i5Y9G82XwDgT5cfXnSeK/x+yOA0S9N8mgvrDiaajwPYXTHDv6MoYMHGvIV2G5BChND3DdrFClbQCARCBB5IcEh+PffugD5iazztaXFw5ZuAS71wvhhzU0Lq8ZRXAAXii4XYur//hnDhj6LUc8NxfPDhrB7JL78fLfuhZNy8KcfEFW/ntc0/BFA1Mg6tcKZOSNnL7oCh37+zdPxTpnclDdek3H5y59ILzoqUgtqUPsWrSy9OkX0h7b1oJ1OgPOCRdZ+V1YC8s/Eo33rOsyPr+YpO/FZbgF8ObG/5uzpE2ijD1WNSwdq/koSQPib9uZfePyGF+dHUn7EonfnYsbUyVg4f44czop5CLmJY0cGLAKVmbgPqlMrXFMfBgJK+IURbYD8JNgyYmGnFsDMTwK+2H4XgqsH63bSM6yAhwAGAswcO4/ldEDLvoD/Gj9Ghmd2OKj47NQfAejv9m1bI18//ch3iDgw+Y3/Ya2CngvUrhWO6W+9CbioEvA8WrMy0EY3l/4KQKgTEV42AXjLCcauTR2BSz1hz+CjHzJBuNILr0zg1xP4Il/EowpAJGdfyET6+d+Qcf4cMtPT2EToUn6uJFK4ZQvnyrhESxD/lySASHvOjKnsmRh2vvriJEk6+RPCiu/mi1m7Phmk1mMU1R8wAcpigijB1s0icOFkElwXLXBk9GB9gDMzji1Bd+7g3leqhjXCsw/g84C7LbGoV6c2GjWozxAd1ZC92P7Lq39it65wx2vhGH2Fk5khJY++BKDPWmGhOPzzj/L5N199KZ+JuEQfKUZKdOXN6ZPHZJjvvv6SrRv5K4I0QdGGTlj1VBIo3HMDbgXyLLCzlc9YXKHhZ048vtndBaEhIX5lyEwAmgd0an+brHEqHr7/XrbPRtTYk0cPseGpmh79X5IA7VrdipwL6fL5+JHPFSNfhcjvO29PkWHoPEDLZk090jeD6ITZAMg4DA0EPBPVsfn9Dmz0U5RG9j8OV2n0U5iAaa/7v2ZiJoBxJqz6FyIsnieWnF1s6Jhsiffw748AfXrzN1TCWWK7+RRAEPj8sGdlGBo1ddGv4lH9m4H8Me7btW5eKgEoTOPICJxNSYQrOx62zFg++023wJHZA4nduflRw5khUAFE+vf2SmTDVWGGJowb4+HfHwEefuB++YycJba7fO5NBHo+cvgQGcZWdAWdOtzukb43kD82EUuO716qiRiF6f/wrUBOMorSusNGHXBaAqDF4ed/xMu1fzWcGbwJIJYihD+jPabv47t0QlFhvjRDk17wfLHkjwB3dWiPS/lyexRGDeNvu4TdV/Mrwr364kQZ5vyvp9Gogff5iICIj/wlx/fQgl6aNKGUAlTDynldgII+KErvjqK0OLYEgatJeHda+xIzYoSZANQHdL2D1yhjB8iHmtz/X19/ldV+EsBedBkP9kmW/t35LFmAOhG0VSRFPt+3Zxf7XgxOZPoG8enzP//+lzvM7p3yyKpaPiOMArw06QVajp4dkAkSSw8N6oTjxPdU46kDpgW4WP7uN7cH7k9uWGJGjDATgJYiOnfgQpohrltXZKT9JsfiGefOIDrK0+zR/74EEGkvns/foLlcLrgcNgx44jH2vRRBucyJ5h9svqK3vhdGjfBI2xfIL1uO/nD9Go1uAvF3KCoy8eDdTeGy0tg/HkVpCbhCY/+cWJz6IQH16vhvfghmApAJiuvckRU8LCSYgZaVb2vVAi9OHI+s9PPMnzhGu3j+O6ZpmgmgLkfT3+3btEKeli37k9wcK/o99ogk3IjRI4axTleYvlPHj6BB3dqm6ZuByks8frhhjRZ07swprXlj920nJUEIMH9qO+DSPczs0PIzvf/F5Z5Yu4DMRmDvSj0E0C+CSv3lBI4eTsHRQyk4dvggfjlxjE3OhBO7jI/8tB8topuYlkEIcOKo+33AzGn8hYxqqiaMGSn9kLMXXcXWDzZg1IhheGbAkxg7agR2bd9azA+NvugGSDU+XyC/xPm51FNa0OXCPC2uSye/IyB/NHFJ+aobkGPhi29s7T8ByOuFpx7hY2F/4lLjnTd7pqFo3pcijO5wyn50vL2dKfkiXmo5J7y8kGF2XX8BzyrWLL4xwB9Hi3XC9FDf5M+KqKjANICgDRFsW8qkcaO9FkAF+esdFwVHViLb9yPIp6Fo+pHuaNaIb/AqKSMqKMyCubPVMiqOrxHRC/uTxw7jzTdeM30hr8ZbK7QGzp5y35Y7b9Z0jzCUXyHCqOHPul/IeHEpB/bjoXvvLi6kSfpmoDCTxo9274z7YK37LLAviAzOeON24ArVfr7nx5YeB1xOwtYVdLYgMPNjRLeOd2DowCfxdP++GPTEYxjUrzgGPP4I+j3yAGK7dJKz3pLyTXmuUb06Hr2vDwb3fxxDBz2Jbp3uLOaHWoB6Y2LjyPoYMWQwNqxegS/27MRXX+xlm8NWLl2MgU/0RYR+ZwYLr7+n8KcFECjcB2tXunfG/Zb6i+k0XgU9j6gZhsP/SgTsPYGc3kBBElsJhTMZw5/is9+S1n68QRTeX6jhfUENqxKl5tnoVwxQRAU0pq/GUxIoHHujl3rSvTmX1rb79PLcZWYG2ng74NFoDHwsGgMficYgwqPNGCLr6htvTcLdiDCaJVWM0oLi6NPTIm5S4X0A2bS5M6aVKIAg1pghFWK8fLOIUN4gjuaKpW/eB3ABjqb8KG8wVwMJcFvHbbw3e8fIv4laQXmCuCWOj6Yc4AIYT0nSauATDz/Aa3FVDS5XGC0HcSxWXtkpSafDLlehPvpgvc8WUIWygbgljoUj7mULoDWVwvwcuf4iTIkaSRUCg+CQOCVu2W8U6OtXTqdBAHED7NKF82UrqDJDZYfR/CxbyM8/uE2QXb2sgw4fZCGmlT6eN4mwCoGBOCQuY+i1p9hQrLcAz8s6dBGWLXqXBSrrmLcK7nmEqP1Gnr0IQH1BLjrpfYEaYRUCA3FIryov5ecV49irAMI+fbx5Q1UrKCNE7ScuyfEjTiUJYLhYrp8+L6DIqiZX/sE4eiTuiEM3t2LHny8BDJf2nTx2BJF1+d5OsVqoJlgFT4jXtsQdLZszdv26tI+2BNIiEV1XrA9LVy1bzFtBJb7jIRAYa/+qpYsZh3Q5B7u6kgTwemOWroy475gLwDepPvMUvz1RTawK5iCu2G2J7K5Qzik/z1BSCygGtlrHPq0XstBV/zkq1hcImCReGWHkhDjqeldHWPUfg3PvuDPht0QB2DWW/MU3HYRrUDvCLYJJRiorRMdL3BBHB77/hnHGfvhNnq4x5deXAOIOfLv8maodH21BmH5Hg1iWroL7cF9YjRDs+GizJJ+Z8WIjn0AF0EdF7nvwgXWrl8u7kY2ZqIwtwrjOQ5ysW7VcEMs5E/2oKfwUwBhA7AJ7/72FcpLBbZ//JwRvBgh7L2o+cbFMP1npPtCn8qciYAH0SZq+kETrRZQZJoIBamZvRoiyCiuwbNECnUJ1suULpRCAwMeyvGenG3bD9APSlalPcNv8YMYBp6+k34xRUUoB3BtSeSS0VU9sjjK2gJupNajlorJSmeWlIR68+IPSCmCIQNi7A999g+6d+fZGaZJuohZh3BJPoLIe+E5sTffX5qsoswAu9mui4sc8abI2qD+/d1RtDTc6jORTGams5KjsxIHKi38oFwH4T3xL2+e0Y/mSxXT6T2ZYLcyNBlEOKtPyJYv0O4rcw3PiQOXFP5SDAKLHZwen5fCL317S79GHiolwXY+SDDN743Ba5J/Kcly/wkAnrljZVV78QzkIoIJP2PS1D6edbWzt0M591NQ4XL2exBCki3yJ/NI1/lQGKgunSCzNeJY9cFSAALR4RyKI9SNyudZszHhrMlo1d18/Jk6IqERcK1BejHtAWzaPxsypk5FjvSjLwX45nNZ2Ahpq+kKFCOD+CSwSwb0SCGSe/xXT3/or2rVtLQsqzNO1grrxtl2bViyPdKmqcNLW6+SX3uSoqAABGGQGDRk19A/ZWRlYs2IZelviEaZfM1bRYqitzZgmXXVGB7xXr1gG64UMmU+PchUrW3mgogTwAXrTJhydrfrx+28x+Y3X0KNLJ3aMyEgMQWwICLTPMPpXazmBrjejQx6T//way4PTcC8Qv4bGM+/lD7cAdNT8mjoigC7LWLJgHoYPHsgOTtczDGVVqIQLqP4EKC6Kc9jTA1gah3/eD6fd22VMv58j7umETCqd1CA1KhoOu11z2G2aw15EN7Yz2O02/TnlgUO7mKX99J/vtJVLF2rTp07RBvXrq90R00a7rUW01iSyvhZRM0wLDa5O1+ww0N/0HT0jP+SXwlDYFUsXaj/t/17Lyb5QLA2CnfLhcuh5K6KDKprDYdefe+a/fMHykPr/mC1umdOqkxUAAAAASUVORK5CYII=" alt="Agência B16" width="44" height="44">
+        <div>
+          <div class="kicker">Agência B16 · Haroldo Lourenço</div>
+          <h1>Black Friday 26</h1>
+        </div>
+      </div>
+      <div class="sub">
+        Tag <b>[BLACK FRIDAY 26]</b> · produto <b>Prática na Advocacia Imobiliária 3.0</b>
+        · oferta <b>Black Novembro - 2026</b> (R$ 1.497)
+        <span class="fase-chip" id="chip-periodo"></span>
+      </div>
+    </div>
+    <div class="tools">
+      <div class="seg" role="group" aria-label="Período">
+        <button data-range="all" aria-pressed="true">Tudo</button>
+        <button data-range="7" aria-pressed="false">7 dias</button>
+        <button data-range="1" aria-pressed="false">Hoje</button>
+        <button data-range="custom" aria-pressed="false">Período</button>
+      </div>
+      <button class="btn" id="btn-tema">◐ Tema</button>
+      <button class="btn" id="btn-refresh">↻ Atualizar</button>
+      <span class="lido" id="lido" aria-live="polite"></span>
+      <div class="dtr" id="dtr">
+        <label>De <input type="date" id="dt-de" aria-label="Data inicial"></label>
+        <label>Até <input type="date" id="dt-ate" aria-label="Data final"></label>
+        <button class="btn" id="dt-tudo">Máximo</button>
+        <span class="aviso hidden" id="dt-aviso">datas invertidas — troquei a ordem</span>
+      </div>
+    </div>
+  </header>
+
+  <div id="banners"></div>
+  <div id="loading">Carregando a planilha da Black Friday…</div>
+  <div id="erro" class="hidden"></div>
+
+  <main id="app" class="hidden">
+
+    <section>
+      <div class="sec-head"><h2>Resultado</h2><span class="hint" id="janela-txt"></span></div>
+      <div class="kpis">
+        <div class="kpi hero">
+          <span class="lab">ROAS</span>
+          <div class="val" id="k-roas">—</div>
+          <div class="foot" id="k-roas-foot">—</div>
+          <span class="flag" id="k-roas-flag"></span>
+        </div>
+        <div class="kpi"><span class="lab">Investimento</span><div class="val" id="k-inv">—</div><div class="foot" id="k-inv-foot">—</div></div>
+        <div class="kpi"><span class="lab">Faturamento</span><div class="val" id="k-fat">—</div><div class="foot" id="k-fat-foot">—</div></div>
+        <div class="kpi"><span class="lab">Vendas pagas</span><div class="val" id="k-vendas">—</div><div class="foot" id="k-vendas-foot">—</div></div>
+        <div class="kpi"><span class="lab">CAC</span><div class="val" id="k-cac">—</div><div class="foot" id="k-cac-foot">—</div></div>
+        <div class="kpi"><span class="lab">Ticket médio</span><div class="val" id="k-ticket">—</div><div class="foot" id="k-ticket-foot">—</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Eficiência de mídia</h2><span class="hint">Meta Ads · campanhas [BLACK FRIDAY 26]</span></div>
+      <div class="kpis">
+        <div class="kpi"><span class="lab">CPM</span><div class="val sm" id="k-cpm">—</div><div class="foot" id="k-cpm-foot">—</div></div>
+        <div class="kpi"><span class="lab">CTR (link)</span><div class="val sm" id="k-ctr">—</div><div class="foot" id="k-ctr-foot">—</div></div>
+        <div class="kpi"><span class="lab">CPC</span><div class="val sm" id="k-cpc">—</div><div class="foot" id="k-cpc-foot">—</div></div>
+        <div class="kpi"><span class="lab">Custo por checkout</span><div class="val sm" id="k-cpi">—</div><div class="foot" id="k-cpi-foot">—</div></div>
+        <div class="kpi"><span class="lab">Checkout → venda</span><div class="val sm" id="k-conv">—</div><div class="foot" id="k-conv-foot">—</div></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Funil e evolução</h2></div>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Do anúncio à venda</h3>
+          <p class="cap">As três primeiras etapas vêm do pixel da Meta; a última é venda paga
+          confirmada na <b>Voomp</b> — o dado de dinheiro de verdade. À direita, o custo da etapa.</p>
+          <div id="funil-box"></div>
+        </div>
+        <div class="card">
+          <h3>Investimento e faturamento por dia</h3>
+          <p class="cap">Barra amarela = investido no dia. Barra azul = faturamento das vendas
+          pagas no dia. <b>Os dois eixos têm escalas diferentes</b> — uma venda vale muitas
+          vezes o gasto de um dia, e num eixo só a barra de investimento sumiria.</p>
+          <div class="plot"><canvas id="c-dia"></canvas></div>
+          <div class="leg"><span><i style="background:var(--cat1)"></i>Investido <span style="opacity:.7">(eixo esquerdo)</span></span><span><i style="background:var(--cat2)"></i>Faturamento <span style="opacity:.7">(eixo direito)</span></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Criativos e conjuntos</h2><span class="hint">investimento e checkout iniciado pelo pixel</span></div>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Investimento por criativo</h3>
+          <p class="cap">Só criativos com gasto no período. Ordenado do maior investimento ao menor.</p>
+          <div class="plot short"><canvas id="c-criativo"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Custo por checkout iniciado</h3>
+          <p class="cap">Gasto ÷ checkouts do pixel. Criativo sem checkout fica de fora — não é
+          custo zero, é custo ainda desconhecido.</p>
+          <div class="plot short"><canvas id="c-cpi"></canvas></div>
+        </div>
+      </div>
+      <div class="tw" style="margin-top:14px">
+        <table id="tab-criativo">
+          <thead><tr><th>Criativo</th><th class="n">Investimento</th><th class="n">Impressões</th><th class="n">Cliques</th><th class="n">CTR</th><th class="n">CPC</th><th class="n">Checkouts</th><th class="n">Custo/checkout</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="tw" style="margin-top:14px">
+        <table id="tab-conjunto">
+          <thead><tr><th>Conjunto</th><th>Público</th><th class="n">Investimento</th><th class="n">Impressões</th><th class="n">Cliques</th><th class="n">CTR</th><th class="n">CPM</th><th class="n">Checkouts</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <div class="sec-head"><h2>Vendas</h2><span class="hint" id="vendas-hint"></span></div>
+      <div id="vendas-box"></div>
+
+      <div class="grid g2" id="vendas-graficos" style="margin-top:14px">
+        <div class="card">
+          <h3>Status dos pedidos</h3>
+          <p class="cap">Todo pedido da oferta no período, não só o pago. Pedido recusado é
+          tentativa de pagamento que não passou — o mesmo comprador costuma tentar de novo.</p>
+          <div class="plot short"><canvas id="c-status"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Forma de pagamento</h3>
+          <p class="cap">Só pedidos pagos. O parcelamento no cartão atrasa o repasse: o PIX cai
+          em 2 dias, o cartão em 10x só fecha no mês seguinte.</p>
+          <div class="plot short"><canvas id="c-metodo"></canvas></div>
+        </div>
+      </div>
+
+      <div class="tw" id="vendas-tabela-box" style="margin-top:14px">
+        <table id="tab-vendas">
+          <thead><tr><th>Data</th><th>Pedido</th><th>Status</th><th>Método</th><th>Afiliado</th><th class="n">Valor</th><th class="n">Líquido</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <footer>
+      <span>Agência B16 · Business Intelligence — Henrique Cardoso</span>
+      <span id="rodape"></span>
+    </footer>
+  </main>
+</div>
+<script>
+'use strict';
+
+/* ======================= CONFIG ======================= */
+/* URL do Cloudflare Worker (worker.js desta pasta). A planilha, a service account e a
+   chave do HMAC ficam nos secrets do Worker — nunca aqui: este arquivo é público. */
+const WORKER_URL = 'https://bf26-dados.henrscard.workers.dev';
+
+const TAG_BF = /\[\s*BLACK\s*FRIDAY\s*26\s*\]/i;   // filtro de campanha na Meta
+
+/* A oferta da Black Friday dentro do produto. O produto "Prática na Advocacia
+   Imobiliária 3.0" é vendido o ano todo em outras ofertas; o que é BF é a oferta
+   "Black Novembro - 2026" (hash FgaDRT). Casar pelo produto contaria venda de
+   outra campanha. Aceito as duas grafias porque "Black Novembro"/"Black Friday"
+   convivem no cadastro da Voomp. */
+const OFERTA_BF = /black\s*(novembro|friday|november)/i;
+
+/* Início da apuração: 1º registro da oferta na planilha. Venda anterior a isso não
+   é da Black Friday. */
+const INICIO = '2026-11-01';
+
+/* ======================= UTIL ======================= */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const brl = v => 'R$ ' + (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+const brlCurto = v => Math.abs(v) >= 1000
+  ? 'R$ ' + (v/1000).toLocaleString('pt-BR',{maximumFractionDigits:1}) + 'k' : brl(v);
+const num = v => (v||0).toLocaleString('pt-BR');
+const pct = (a,b) => b ? (a/b*100).toFixed(0) + '%' : '—';
+/* CTR e conversão vivem abaixo de 10%: inteiro juntaria 1,2% e 1,8% no mesmo "1%" */
+const pctFino = (a,b) => { if(!b) return '—'; const v = a/b*100;
+  return (v < 10 ? v.toFixed(1) : v.toFixed(0)).replace('.',',') + '%'; };
+const div = (a,b) => b ? a/b : null;
+const nOrDash = (v, fmt) => v == null ? '—' : fmt(v);
+const dataBR = iso => { if(!iso) return '—'; const p = String(iso).slice(0,10).split('-'); return p.length===3 ? p[2]+'/'+p[1] : iso; };
+const dataBRano = iso => { if(!iso) return '—'; const p = String(iso).slice(0,10).split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso; };
+const horaBR = iso => String(iso||'').slice(11,16);
+/* YYYY-MM-DD no fuso local — `toISOString()` converte para UTC e troca o dia */
+const isoLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const somaDias = (iso, n) => { const d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); };
+const difDias = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5);
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const soma = (arr, f) => arr.reduce((s,o) => s + (Number(f(o))||0), 0);
+const hoje = () => isoLocal(new Date());
+
+function encurtar(s, n=36){
+  s = String(s);
+  if (s.length <= n) return s;
+  const cab = Math.ceil((n-1)*0.55);
+  return s.slice(0,cab) + '…' + s.slice(-(n-1-cab));
+}
+function agrupar(arr, fn){
+  const m = new Map();
+  arr.forEach(o => { const k = fn(o) ?? '(sem atribuição)'; if(!m.has(k)) m.set(k,[]); m.get(k).push(o); });
+  return m;
+}
+
+/* ======================= FONTE ======================= */
+/* Para testar fora do ar: http://localhost:8000/?fonte=amostra.json. Só vale em
+   localhost — no endereço público ninguém troca a fonte por um link. */
+function urlFonte(fresh){
+  const p = new URLSearchParams(location.search);
+  const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  if (local && p.get('fonte')) return p.get('fonte');
+  return WORKER_URL + (fresh ? '/?fresh=1' : '/');
+}
+
+/* ======================= MODELO ======================= */
+const publicoDe = c => /\[\s*QUENTE\s*\]/i.test(c||'') ? 'quente'
+                     : /\[\s*FRIO\s*\]/i.test(c||'') ? 'frio' : '(outro)';
+const ROT_PUBLICO = { quente:'Quente', frio:'Frio', '(outro)':'—' };
+
+/* Meta anexa " – Cópia" ao duplicar anúncio, e os conjuntos ADV+ duplicados ganham
+   sufixo " - 12". Normalizo para o mesmo criativo não virar duas linhas na tabela. */
+const chave = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/[–—]/g,'-')
+  .replace(/(\s*-\s*copia|\s*\(campanha principal\))+\s*$/i,'')
+  .replace(/\s+/g,' ').trim().toLowerCase();
+
+let BRUTO = null;
+let MIDIA = [], PEDIDOS = [], FORA_TAG = 0, FORA_OFERTA = 0;
+
+/* Status final do pedido a partir dos eventos. A Voomp manda uma linha por evento e
+   o status pode andar (waiting_payment → paid → refunded). Estorno ganha de pago,
+   pago ganha do resto: o que importa é onde o pedido PAROU, não por onde passou. */
+function statusFinal(estados){
+  const e = [...estados];
+  if (e.some(s => /refund|chargeback|estorn/.test(s))) return 'estorno';
+  if (e.includes('paid')) return 'pago';
+  if (e.some(s => /waiting|pending|aguard/.test(s))) return 'aguardando';
+  if (e.includes('refused')) return 'recusado';
+  return 'outro';
+}
+
+function preparar(d){
+  const abas = d.abas || {};
+
+  /* ---- mídia ---- */
+  const meta = abas.meta_ads || [];
+  MIDIA = meta.filter(m => TAG_BF.test(m.campanha||'') && m.dia).map(m => ({
+    ...m, dia: m.dia.slice(0,10), publico: publicoDe(m.campanha) }));
+  FORA_TAG = meta.length - MIDIA.length;
+
+  /* ---- vendas ----
+     A aba é o log de webhook da Voomp: UMA LINHA POR EVENTO. Dois cuidados:
+
+     1. Consolido por `sale_id` — a mesma venda volta quando o status muda. Sem isso
+        um PIX pago contaria 2 vezes (waiting + paid).
+     2. Tentativa recusada tem `sale_id` PRÓPRIO, não é o mesmo pedido tentando de
+        novo. Então "pedidos" > "compradores": o mesmo CPF pode gerar 3 sale_id (duas
+        recusas e a aprovada). Por isso a contagem de venda paga usa sale_id, mas o
+        KPI de comprador único usa o HMAC do e-mail.
+
+     Linhas com type=lead (checkoutAbandoned) não têm sale_id e não são venda —
+     ficam fora de PEDIDOS, contadas à parte como abandono. */
+  const linhas = (abas.vendas || []);
+  const daOferta = l => OFERTA_BF.test(l.oferta||'');
+  const noPeriodo = l => (l.criado_em || l.recebido_em || '') >= INICIO;
+  const vendasBF = linhas.filter(l => l.venda_id && daOferta(l) && noPeriodo(l));
+  FORA_OFERTA = linhas.filter(l => l.venda_id && !daOferta(l)).length;
+
+  const ped = new Map();
+  vendasBF.forEach(v => {
+    const k = String(v.venda_id);
+    const p = ped.get(k) || { ...v, estados: new Set() };
+    [v.status, v.status_atual].forEach(s => { if (s) p.estados.add(String(s).toLowerCase()); });
+    /* guardo o valor do evento PAGO: o evento de recusa vem sem taxa/líquido */
+    if (String(v.status||'').toLowerCase() === 'paid'){
+      p.valor = v.valor; p.liquido = v.liquido; p.taxa = v.taxa;
+      p.com_afiliado = v.com_afiliado; p.pago_em = v.pago_em;
+    }
+    const dt = v.criado_em || v.recebido_em;
+    if (dt && (!p.criado_em || dt < p.criado_em)) p.criado_em = dt;
+    ped.set(k, p);
+  });
+
+  PEDIDOS = [...ped.values()].map(p => {
+    const final = statusFinal(p.estados);
+    /* O dia da venda é o dia do PAGAMENTO, não o da criação: um boleto criado dia 10
+       e pago dia 13 é faturamento do 13. Na falta do pago_em, cai para a criação. */
+    const base = final === 'pago' ? (p.pago_em || p.criado_em) : p.criado_em;
+    return { ...p, final, dia: String(base||'').slice(0,10) };
+  }).filter(p => p.dia);
+
+  ABANDONOS = linhas.filter(l => !l.venda_id && /abandon/i.test(l.gatilho||'') && daOferta(l)).length;
+}
+let ABANDONOS = 0;
+
+/* ======================= CHART.JS ======================= */
+const escuro = () => document.documentElement.classList.contains('dark');
+const graficos = {};
+function desenhar(id, cfg){
+  if (graficos[id]) graficos[id].destroy();
+  const el = document.getElementById(id); if (!el) return;
+  graficos[id] = new Chart(el.getContext('2d'), cfg);
+}
+/* Rótulo direto em toda barra. `total:true` = um rótulo só, no topo da pilha.
+   Com coluna estreita demais (muitos dias no celular) o rótulo sai — o tooltip fica. */
+const rotulos = {
+  id:'rotulos',
+  afterDatasetsDraw(ch, _a, opts){
+    if (!opts || opts.off) return;
+    const fmt = opts.fmt || (v => v);
+    const horiz = ch.options.indexAxis === 'y';
+    const n = (ch.data.labels||[]).length;
+    if (!horiz && n && ch.chartArea.width / n < 30) return;
+    const ctx = ch.ctx; ctx.save();
+    ctx.font = '600 11px "DM Sans", system-ui, sans-serif';
+    ctx.fillStyle = css('--muted');
+    /* Com duas séries lado a lado e barras finas, o rótulo centralizado de uma invade
+       a barra da outra (o caso do dia com gasto E venda). Quando há mais de uma série
+       visível na vertical, encosto o rótulo na borda externa de cada barra: a série da
+       esquerda alinha à direita do seu centro, a da direita à esquerda. */
+    const visiveis = ch.data.datasets.map((d,i) => i)
+      .filter(i => !ch.getDatasetMeta(i).hidden && !ch.data.datasets[i].semRotulo);
+    const duplo = !horiz && visiveis.length > 1;
+
+    ch.data.datasets.forEach((ds, di) => {
+      if (ds.semRotulo) return;
+      const meta = ch.getDatasetMeta(di); if (meta.hidden) return;
+      const ordem = visiveis.indexOf(di);
+      meta.data.forEach((el, i) => {
+        const v = ds.data[i]; if (v == null || v === 0) return;
+        let x = el.x, align = horiz ? 'left' : 'center';
+        if (duplo){
+          const meia = (el.width || 10) / 2 + 2;
+          /* só desloco se a barra vizinha do mesmo dia também tem valor — senão o
+             rótulo fica torto sem motivo */
+          const vizinho = visiveis.some(o => o !== di && ch.data.datasets[o].data[i]);
+          if (vizinho){ align = ordem === 0 ? 'right' : 'left';
+                        x = el.x + (ordem === 0 ? meia : -meia); }
+        }
+        ctx.textAlign = align;
+        ctx.textBaseline = horiz ? 'middle' : 'bottom';
+        ctx.fillText(fmt(v, di, i), horiz ? el.x + 6 : x, el.y + (horiz ? 0 : -4));
+      });
+    });
+    ctx.restore();
+  }
+};
+Chart.register(rotulos);
+
+function eixos({horiz=false, moeda=false, pad=1.2, empilhado=false} = {}){
+  const tick = { color: css('--muted'), font:{ family:'"DM Sans", system-ui, sans-serif', size:11 } };
+  const val = {
+    grid:{ color: css('--grid'), drawTicks:false }, border:{ color: css('--baseline') },
+    ticks:{ ...tick, maxRotation:0, precision: moeda ? undefined : 0, callback: v => moeda ? brlCurto(v) : v },
+    grace: Math.round((pad-1)*100) + '%', beginAtZero:true, stacked: empilhado,
+  };
+  const cat = { grid:{display:false}, border:{ color: css('--baseline') }, stacked: empilhado,
+                ticks:{ ...tick, autoSkip: !horiz, maxRotation:0, crossAlign: horiz ? 'far' : undefined } };
+  return horiz ? { x:val, y:cat } : { x:cat, y:val };
+}
+function tooltip(fmt){
+  return { enabled:true, backgroundColor: escuro() ? '#333' : '#111', titleColor:'#fff', bodyColor:'#fff',
+    borderWidth:0, padding:10, cornerRadius:7, displayColors:true, boxWidth:9, boxHeight:9,
+    titleFont:{ family:'"DM Sans", system-ui, sans-serif', size:12.5, weight:'500' },
+    bodyFont:{ family:'"DM Sans", system-ui, sans-serif', size:12.5 }, callbacks:{ label:fmt } };
+}
+const BASE = { responsive:true, maintainAspectRatio:false, animation:{duration:250}, layout:{ padding:{ right:14, top:4 } },
+               interaction:{ mode:'index', intersect:false } };
+const barra = { borderRadius:4, borderSkipped:false, borderWidth:2, maxBarThickness:38 };
+
+/* ======================= PERÍODO ======================= */
+let RANGE = 'all', DE = null, ATE = null;
+
+function limites(){
+  const dias = [...MIDIA.map(m => m.dia), ...PEDIDOS.map(p => p.dia)].filter(Boolean).sort();
+  return dias.length ? { min: dias[0], max: dias[dias.length-1] } : { min: hoje(), max: hoje() };
+}
+/* A janela considera mídia E venda. Olhando só a mídia, o filtro travaria em 13/11 e
+   esconderia a venda de 06/11 (anterior ao primeiro dia de anúncio). */
+function janela(){
+  const L = limites();
+  if (RANGE === 'all') return { de: L.min, ate: L.max };
+  if (RANGE === 'custom') return { de: DE || L.min, ate: ATE || L.max };
+  const n = RANGE === '1' ? 1 : 7;
+  const ate = L.max;
+  return { de: somaDias(ate, -(n-1)), ate };
+}
+const noPeriodo = (dia, j) => dia >= j.de && dia <= j.ate;
+
+/* ======================= KPIs ======================= */
+function set(id, v, foot){
+  const el = $('#'+id); if (el) el.textContent = v;
+  if (foot !== undefined){ const f = $('#'+id+'-foot'); if (f) f.textContent = foot; }
+}
+function flag(id, txt, cls){
+  const el = $('#'+id); if (!el) return;
+  el.textContent = txt || ''; el.className = 'flag' + (cls ? ' ' + cls : '');
+}
+
+function renderKPIs(j, mid, ped){
+  const inv = soma(mid, m => m.gasto);
+  const pagos = ped.filter(p => p.final === 'pago');
+  const fat = soma(pagos, p => p.valor);
+  const liq = soma(pagos, p => p.liquido);
+  const roas = div(fat, inv);
+  const cac = div(inv, pagos.length);
+  const ticket = div(fat, pagos.length);
+  const compradores = new Set(pagos.map(p => p.p_email || p.p_fone || p.venda_id)).size;
+
+  set('k-inv', brl(inv), `${num(mid.length)} linha(s) de anúncio · ${new Set(mid.map(m=>m.dia)).size} dia(s) com gasto`);
+  set('k-fat', brl(fat), liq ? `líquido do produtor ${brl(liq)}` : 'bruto da oferta (preço cheio)');
+  set('k-vendas', num(pagos.length), compradores !== pagos.length
+    ? `${num(compradores)} comprador(es) único(s)` : 'pedidos pagos, consolidados por venda');
+
+  if (roas == null){
+    set('k-roas', '—', inv ? 'sem venda paga no período' : 'sem investimento no período');
+    flag('k-roas-flag', '', '');
+  } else {
+    set('k-roas', roas.toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2}) + '×',
+        `${brl(fat)} de faturamento sobre ${brl(inv)} de mídia`);
+    flag('k-roas-flag', roas >= 2 ? 'saudável' : roas >= 1 ? 'no limite' : 'abaixo de 1×',
+         roas >= 2 ? 'good' : roas >= 1 ? 'warn' : 'crit');
+  }
+  set('k-cac', nOrDash(cac, brl), pagos.length ? `${brl(inv)} ÷ ${num(pagos.length)} venda(s)` : 'sem venda paga');
+  set('k-ticket', nOrDash(ticket, brl), pagos.length ? 'faturamento ÷ vendas pagas' : 'sem venda paga');
+
+  $('#janela-txt').textContent = `${dataBRano(j.de)} a ${dataBRano(j.ate)}`;
+}
+
+function renderMidia(mid, ped){
+  const inv = soma(mid, m => m.gasto);
+  const imp = soma(mid, m => m.impressoes);
+  const cli = soma(mid, m => m.cliques);
+  const chk = soma(mid, m => m.checkouts);
+  const pagos = ped.filter(p => p.final === 'pago').length;
+
+  set('k-cpm', nOrDash(div(inv, imp/1000), brl), `${num(imp)} impressões`);
+  set('k-ctr', pctFino(cli, imp), `${num(cli)} cliques no link`);
+  set('k-cpc', nOrDash(div(inv, cli), brl), cli ? 'investimento ÷ cliques' : 'sem clique');
+  set('k-cpi', nOrDash(div(inv, chk), brl), `${num(chk)} checkout(s) iniciado(s) · pixel`);
+  set('k-conv', pctFino(pagos, chk), chk ? `${num(pagos)} venda(s) paga(s) ÷ ${num(chk)} checkout(s)` : 'sem checkout no pixel');
+}
+
+/* ======================= FUNIL ======================= */
+function trap(nome, valor, custoLbl, custo, largura, fim){
+  return `<div class="ftrap${fim ? ' fim' : ''}" style="width:${largura}%">
+    <div class="ft-left"><span class="ft-name">${esc(nome)}</span><span class="ft-val">${esc(valor)}</span></div>
+    <div class="ft-right"><div class="ft-cost">${esc(custo)}</div><div class="ft-cost-lbl">${esc(custoLbl)}</div></div>
+  </div>`;
+}
+function conector(txt){
+  return `<div class="fc"><div class="fc-line"></div><div class="fc-tag">${esc(txt)}</div><div class="fc-line"></div></div>`;
+}
+
+function renderFunil(mid, ped){
+  const inv = soma(mid, m => m.gasto);
+  const imp = soma(mid, m => m.impressoes);
+  const cli = soma(mid, m => m.cliques);
+  const chk = soma(mid, m => m.checkouts);
+  const pagos = ped.filter(p => p.final === 'pago').length;
+
+  const etapas = [
+    { nome:'Impressões',  v:imp, custo:div(inv, imp/1000), lbl:'CPM' },
+    { nome:'Cliques no link', v:cli, custo:div(inv, cli), lbl:'CPC' },
+    { nome:'Checkout iniciado', v:chk, custo:div(inv, chk), lbl:'por checkout' },
+    { nome:'Venda paga', v:pagos, custo:div(inv, pagos), lbl:'CAC', fim:true },
+  ];
+  /* A largura é proporcional ao log da etapa, não ao valor: de 7.684 impressões para
+     2 vendas, a escala linear deixaria as últimas faixas invisíveis. */
+  const topo = Math.max(...etapas.map(e => e.v), 1);
+  const w = v => { if (!v) return 24; const r = Math.log10(v+1) / Math.log10(topo+1); return 24 + r*76; };
+
+  $('#funil-box').innerHTML = '<div class="funil">' + etapas.map((e,i) =>
+    (i ? conector(pctFino(e.v, etapas[i-1].v) + ' da etapa anterior') : '')
+    + trap(e.nome, num(e.v), e.lbl, e.custo == null ? '—' : brl(e.custo), w(e.v), e.fim)
+  ).join('') + '</div>';
+}
+
+/* ======================= GRÁFICOS ======================= */
+function renderDia(j, mid, ped){
+  const dias = [];
+  for (let d = j.de; d <= j.ate; d = somaDias(d, 1)) dias.push(d);
+  const gasto = dias.map(d => soma(mid.filter(m => m.dia === d), m => m.gasto));
+  const pagos = ped.filter(p => p.final === 'pago');
+  const fat = dias.map(d => soma(pagos.filter(p => p.dia === d), p => p.valor));
+  const qtd = dias.map(d => pagos.filter(p => p.dia === d).length);
+
+  /* DOIS EIXOS de propósito. Investimento vive na casa das dezenas de reais e
+     faturamento na dos milhares (R$ 1.497 por venda): num eixo só, a barra de gasto
+     vira um traço rente ao zero e os rótulos se empilham em cima uns dos outros.
+     Cada eixo é rotulado com a cor da sua série, e o rótulo direto em cada barra
+     mantém a leitura sem depender da escala. */
+  const eixoCat = { grid:{display:false}, border:{ color: css('--baseline') },
+    ticks:{ color: css('--muted'), font:{ family:'"DM Sans", system-ui, sans-serif', size:11 },
+            autoSkip:true, maxRotation:0 } };
+  const eixoVal = (cor, pos) => ({
+    position: pos, beginAtZero:true, grace:'25%',
+    grid:{ color: pos === 'left' ? css('--grid') : 'transparent', drawTicks:false },
+    border:{ color: css('--baseline') },
+    ticks:{ color: cor, font:{ family:'"DM Sans", system-ui, sans-serif', size:11 },
+            maxRotation:0, callback: v => brlCurto(v) } });
+
+  desenhar('c-dia', { type:'bar',
+    data:{ labels: dias.map(dataBR), datasets:[
+      { label:'Investido', data:gasto, yAxisID:'y', backgroundColor:css('--cat1'), borderColor:css('--cat1'), ...barra },
+      { label:'Faturamento', data:fat, yAxisID:'y2', backgroundColor:css('--cat2'), borderColor:css('--cat2'), ...barra },
+    ]},
+    options:{ ...BASE,
+      scales:{ x: eixoCat, y: eixoVal(css('--cat1'), 'left'), y2: eixoVal(css('--cat2'), 'right') },
+      /* barra mais estreita e com folga entre dias: o rótulo de um dia encostava na
+         barra do dia seguinte quando dois dias vizinhos tinham valor */
+      datasets:{ bar:{ categoryPercentage:0.62, barPercentage:0.82 } },
+      plugins:{ legend:{display:false},
+        tooltip:tooltip(c => {
+          const base = `${c.dataset.label}: ${brl(c.parsed.y)}`;
+          return c.datasetIndex === 1 && qtd[c.dataIndex]
+            ? `${base} (${qtd[c.dataIndex]} venda${qtd[c.dataIndex]>1?'s':''})` : base;
+        }),
+        /* na barra de faturamento o rótulo é a QUANTIDADE de vendas — o valor já está
+           no eixo, e a quantidade é o que não dá para ler da altura */
+        rotulos:{ fmt:(v, di, i) => di === 1 ? num(qtd[i]) + (qtd[i] > 1 ? ' vendas' : ' venda') : brlCurto(v) } } } });
+}
+
+function renderCriativos(mid){
+  const g = agrupar(mid.filter(m => m.gasto), m => chave(m.anuncio) || '(sem nome)');
+  const linhas = [...g.entries()].map(([k, arr]) => {
+    const inv = soma(arr, m => m.gasto);
+    const imp = soma(arr, m => m.impressoes), cli = soma(arr, m => m.cliques);
+    const chk = soma(arr, m => m.checkouts);
+    return { nome: arr[0].anuncio || '(sem nome)', thumb: arr.find(a => a.thumb)?.thumb,
+             inv, imp, cli, chk, cpi: div(inv, chk) };
+  }).sort((a,b) => b.inv - a.inv);
+
+  desenhar('c-criativo', { type:'bar',
+    data:{ labels: linhas.map(l => encurtar(l.nome, 30)), datasets:[
+      { label:'Investido', data: linhas.map(l => l.inv), backgroundColor:css('--cat1'), borderColor:css('--cat1'), ...barra }]},
+    options:{ ...BASE, indexAxis:'y', scales:eixos({horiz:true, moeda:true, pad:1.25}),
+      plugins:{ legend:{display:false}, tooltip:tooltip(c => brl(c.parsed.x)), rotulos:{ fmt:v => brl(v) } } } });
+
+  const comChk = linhas.filter(l => l.chk).sort((a,b) => a.cpi - b.cpi);
+  desenhar('c-cpi', { type:'bar',
+    data:{ labels: comChk.map(l => encurtar(l.nome, 30)), datasets:[
+      { label:'Custo/checkout', data: comChk.map(l => l.cpi), backgroundColor:css('--cat2'), borderColor:css('--cat2'), ...barra }]},
+    options:{ ...BASE, indexAxis:'y', scales:eixos({horiz:true, moeda:true, pad:1.25}),
+      plugins:{ legend:{display:false}, tooltip:tooltip(c => brl(c.parsed.x)), rotulos:{ fmt:v => brl(v) } } } });
+
+  $('#tab-criativo tbody').innerHTML = linhas.map(l => `<tr>
+    <td class="wrap-ok"><div class="cri">${l.thumb ? `<img class="thumb" src="${esc(l.thumb)}" alt="" loading="lazy" referrerpolicy="no-referrer">` : '<span class="thumb"></span>'}<span>${esc(l.nome)}</span></div></td>
+    <td class="n">${brl(l.inv)}</td><td class="n">${num(l.imp)}</td><td class="n">${num(l.cli)}</td>
+    <td class="n">${pctFino(l.cli, l.imp)}</td><td class="n">${nOrDash(div(l.inv,l.cli), brl)}</td>
+    <td class="n">${num(l.chk)}</td><td class="n">${nOrDash(l.cpi, brl)}</td></tr>`).join('')
+    || '<tr><td colspan="8" style="color:var(--muted)">Sem investimento no período.</td></tr>';
+}
+
+function renderConjuntos(mid){
+  const g = agrupar(mid.filter(m => m.gasto), m => chave(m.conjunto) || '(sem nome)');
+  const linhas = [...g.entries()].map(([k, arr]) => {
+    const inv = soma(arr, m => m.gasto);
+    const imp = soma(arr, m => m.impressoes), cli = soma(arr, m => m.cliques);
+    return { nome: arr[0].conjunto || '(sem nome)', publico: arr[0].publico,
+             inv, imp, cli, chk: soma(arr, m => m.checkouts) };
+  }).sort((a,b) => b.inv - a.inv);
+
+  $('#tab-conjunto tbody').innerHTML = linhas.map(l => `<tr>
+    <td class="wrap-ok">${esc(l.nome)}</td><td>${esc(ROT_PUBLICO[l.publico] || l.publico)}</td>
+    <td class="n">${brl(l.inv)}</td><td class="n">${num(l.imp)}</td><td class="n">${num(l.cli)}</td>
+    <td class="n">${pctFino(l.cli, l.imp)}</td><td class="n">${nOrDash(div(l.inv, l.imp/1000), brl)}</td>
+    <td class="n">${num(l.chk)}</td></tr>`).join('')
+    || '<tr><td colspan="8" style="color:var(--muted)">Sem investimento no período.</td></tr>';
+}
+
+/* ======================= VENDAS ======================= */
+const ROT_STATUS = { pago:'Pago', aguardando:'Aguardando pagamento', recusado:'Recusado', estorno:'Estornado', outro:'Outro' };
+const PILL_STATUS = { pago:'good', aguardando:'wait', recusado:'mut', estorno:'ref', outro:'mut' };
+const ROT_METODO = { credit_card:'Cartão', pix:'Pix', boleto:'Boleto', paypal:'PayPal' };
+const rotMetodo = m => ROT_METODO[String(m||'').toLowerCase()] || (m || '—');
+
+function renderVendas(j, mid, ped){
+  const pagos = ped.filter(p => p.final === 'pago');
+  const temGrafico = pagos.length > 0;
+  /* Sem venda paga no período os gráficos sairiam vazios — escondo em vez de mostrar
+     eixo sem dado (o filtro "Hoje" cai nisso direto). */
+  ['#vendas-graficos', '#vendas-tabela-box'].forEach(s => $(s).classList.toggle('hidden', !ped.length));
+
+  const fat = soma(pagos, p => p.valor), liq = soma(pagos, p => p.liquido);
+  const recusados = ped.filter(p => p.final === 'recusado').length;
+  $('#vendas-hint').textContent = ped.length
+    ? `${num(ped.length)} pedido(s) no período · ${num(pagos.length)} pago(s)`
+    : 'nenhum pedido da oferta no período';
+
+  const cards = [];
+  if (ped.length){
+    cards.push(`<div class="kpi"><span class="lab">Faturamento bruto</span><div class="val sm">${brl(fat)}</div><div class="foot">preço cheio da oferta</div></div>`);
+    cards.push(`<div class="kpi"><span class="lab">Líquido do produtor</span><div class="val sm">${brl(liq)}</div><div class="foot">${fat ? pct(liq, fat) + ' do bruto — após taxa e afiliado' : '—'}</div></div>`);
+    cards.push(`<div class="kpi"><span class="lab">Pedidos recusados</span><div class="val sm">${num(recusados)}</div><div class="foot">${ped.length ? pct(recusados, ped.length) + ' das tentativas' : '—'}</div></div>`);
+    if (ABANDONOS) cards.push(`<div class="kpi"><span class="lab">Checkouts abandonados</span><div class="val sm">${num(ABANDONOS)}</div><div class="foot">sem filtro de período (a Voomp não datou)</div></div>`);
+  }
+  $('#vendas-box').innerHTML = cards.length ? `<div class="kpis">${cards.join('')}</div>`
+    : '<div class="note"><span class="ic">○</span><div>Nenhum pedido da oferta <b>Black Novembro - 2026</b> neste período.</div></div>';
+
+  if (!ped.length) return;
+
+  /* status */
+  const porStatus = agrupar(ped, p => p.final);
+  const ordem = ['pago','aguardando','recusado','estorno','outro'].filter(s => porStatus.has(s));
+  desenhar('c-status', { type:'bar',
+    data:{ labels: ordem.map(s => ROT_STATUS[s]), datasets:[{ label:'Pedidos',
+      data: ordem.map(s => porStatus.get(s).length),
+      backgroundColor: ordem.map(s => s === 'pago' ? css('--good') : s === 'estorno' ? css('--critical')
+                                   : s === 'aguardando' ? css('--warn') : css('--neutro')),
+      borderColor: ordem.map(s => s === 'pago' ? css('--good') : s === 'estorno' ? css('--critical')
+                                : s === 'aguardando' ? css('--warn') : css('--neutro')), ...barra }]},
+    options:{ ...BASE, indexAxis:'y', scales:eixos({horiz:true, pad:1.3}),
+      plugins:{ legend:{display:false}, tooltip:tooltip(c => `${num(c.parsed.x)} pedido(s)`), rotulos:{ fmt:v => num(v) } } } });
+
+  /* método — só pagos */
+  const porMetodo = agrupar(pagos, p => rotMetodo(p.metodo));
+  const met = [...porMetodo.entries()].sort((a,b) => b[1].length - a[1].length);
+  desenhar('c-metodo', { type:'bar',
+    data:{ labels: met.map(([k]) => k), datasets:[{ label:'Vendas pagas',
+      data: met.map(([,v]) => v.length), backgroundColor:css('--cat2'), borderColor:css('--cat2'), ...barra }]},
+    options:{ ...BASE, indexAxis:'y', scales:eixos({horiz:true, pad:1.3}),
+      plugins:{ legend:{display:false},
+        tooltip:tooltip(c => { const arr = met[c.dataIndex][1];
+          return `${num(arr.length)} venda(s) · ${brl(soma(arr, p => p.valor))}`; }),
+        rotulos:{ fmt:v => num(v) } } } });
+
+  /* tabela */
+  const linhas = [...ped].sort((a,b) => (b.criado_em||'') < (a.criado_em||'') ? -1 : 1);
+  $('#tab-vendas tbody').innerHTML = linhas.map(p => `<tr>
+    <td>${dataBRano(p.dia)}${horaBR(p.pago_em || p.criado_em) ? ' <span style="color:var(--muted)">' + horaBR(p.pago_em || p.criado_em) + '</span>' : ''}</td>
+    <td><code>${esc(p.venda_id)}</code></td>
+    <td><span class="pill ${PILL_STATUS[p.final]}">${ROT_STATUS[p.final]}</span>${p.motivo_recusa ? ' <span style="color:var(--muted);font-size:11.5px">' + esc(p.motivo_recusa) + '</span>' : ''}</td>
+    <td>${esc(rotMetodo(p.metodo))}${p.parcelas > 1 ? ` ${p.parcelas}×` : ''}</td>
+    <td>${esc(p.afiliado || '—')}</td>
+    <td class="n">${p.valor ? brl(p.valor) : '—'}</td>
+    <td class="n">${p.liquido ? brl(p.liquido) : '—'}</td></tr>`).join('');
+}
+
+/* ======================= BANNERS ======================= */
+/* Avisos de qualidade do dado. Mostro na tela porque um KPI zerado sem explicação é
+   pior que um KPI zerado com o motivo do lado. */
+function renderBanners(){
+  const b = [];
+  const faltando = BRUTO?.colunas_faltando || {};
+  Object.entries(faltando).forEach(([aba, cols]) => b.push({ cls:'crit',
+    html:`Cabeçalho mudou na aba <code>${esc(aba)}</code>: não achei ${cols.map(c => '<code>'+esc(c)+'</code>').join(', ')}.
+          Essas colunas estão saindo vazias — os KPIs que dependem delas estão errados.` }));
+  Object.entries(BRUTO?.erros || {}).forEach(([aba, msg]) => b.push({ cls:'crit',
+    html:`Não consegui ler a aba <code>${esc(aba)}</code>: ${esc(msg)}` }));
+
+  const compras = soma(MIDIA, m => m.compras_pixel);
+  const pagosTotal = PEDIDOS.filter(p => p.final === 'pago').length;
+  if (!compras && pagosTotal) b.push({ cls:'warn',
+    html:`<b>O pixel da Meta não está registrando compra.</b> ${num(pagosTotal)} venda(s) paga(s) na Voomp
+          e <b>zero</b> em <code>Action FB Pixel Purchase</code>. A otimização da campanha está cega para
+          conversão — vale revisar o pixel/CAPI no checkout da Voomp.` });
+
+  /* Venda anterior ao primeiro dia de mídia não pode ser creditada aos anúncios. */
+  const ini = MIDIA.map(m => m.dia).sort()[0];
+  const antes = ini ? PEDIDOS.filter(p => p.final === 'pago' && p.dia < ini) : [];
+  if (antes.length) b.push({ cls:'info',
+    html:`${num(antes.length)} venda(s) paga(s) <b>antes do primeiro dia de mídia</b> (${dataBRano(ini)}) —
+          ${antes.map(p => dataBRano(p.dia)).join(', ')}. Vieram de lista, orgânico ou afiliado:
+          no filtro "Tudo" elas entram no ROAS, mas não foram geradas pelos anúncios.` });
+
+  /* Stract extrai de madrugada: o dia corrente da mídia costuma estar parcial. */
+  const ultMidia = MIDIA.map(m => m.dia).sort().pop();
+  if (ultMidia && ultMidia < hoje()) b.push({ cls:'warn',
+    html:`A mídia está atualizada até <b>${dataBRano(ultMidia)}</b> e hoje é ${dataBRano(hoje())}.
+          O investimento dos dias seguintes ainda não entrou na planilha (o Stract extrai de madrugada).` });
+
+  if (FORA_TAG) b.push({ cls:'info',
+    html:`${num(FORA_TAG)} linha(s) da aba <code>meta_ads</code> sem a tag <code>[BLACK FRIDAY 26]</code>
+          ficaram fora do investimento.` });
+  if (FORA_OFERTA) b.push({ cls:'info',
+    html:`${num(FORA_OFERTA)} pedido(s) de outra oferta do mesmo produto ficaram fora das vendas —
+          o dashboard conta só a oferta <b>Black Novembro - 2026</b>.` });
+
+  $('#banners').innerHTML = b.map(x =>
+    `<div class="note ${x.cls}"><span class="ic">${x.cls === 'crit' ? '●' : x.cls === 'warn' ? '▲' : 'ℹ'}</span><div>${x.html}</div></div>`).join('');
+}
+
+/* ======================= RENDER ======================= */
+function render(){
+  const j = janela();
+  const mid = MIDIA.filter(m => noPeriodo(m.dia, j));
+  const ped = PEDIDOS.filter(p => noPeriodo(p.dia, j));
+
+  $('#chip-periodo').textContent = RANGE === 'all' ? 'período completo'
+    : RANGE === '1' ? 'último dia com dado' : RANGE === '7' ? 'últimos 7 dias' : 'período escolhido';
+
+  renderKPIs(j, mid, ped);
+  renderMidia(mid, ped);
+  renderFunil(mid, ped);
+  renderDia(j, mid, ped);
+  renderCriativos(mid);
+  renderConjuntos(mid);
+  renderVendas(j, mid, ped);
+
+  $('#rodape').textContent = BRUTO?.gerado_em
+    ? 'Dados lidos da planilha em ' + new Date(BRUTO.gerado_em).toLocaleString('pt-BR') : '';
+}
+
+/* ======================= CONTROLES ======================= */
+function ligarControles(){
+  $$('.seg button').forEach(b => b.addEventListener('click', () => {
+    $$('.seg button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    RANGE = b.dataset.range;
+    $('#dtr').classList.toggle('on', RANGE === 'custom');
+    if (RANGE === 'custom'){
+      const L = limites();
+      if (!DE)  { DE  = L.min; $('#dt-de').value  = DE; }
+      if (!ATE) { ATE = L.max; $('#dt-ate').value = ATE; }
+      $('#dt-de').min = $('#dt-ate').min = L.min;
+      $('#dt-de').max = $('#dt-ate').max = L.max;
+    }
+    render();
+  }));
+
+  /* Data invertida é erro de digitação, não de uso: troco a ordem e aviso, em vez de
+     mostrar a tela vazia. */
+  const lerDatas = () => {
+    let de = $('#dt-de').value || null, ate = $('#dt-ate').value || null;
+    const trocou = de && ate && de > ate;
+    if (trocou) [de, ate] = [ate, de];
+    $('#dt-aviso').classList.toggle('hidden', !trocou);
+    DE = de; ATE = ate; render();
+  };
+  $('#dt-de').addEventListener('change', lerDatas);
+  $('#dt-ate').addEventListener('change', lerDatas);
+  $('#dt-tudo').addEventListener('click', () => {
+    const L = limites();
+    DE = L.min; ATE = L.max;
+    $('#dt-de').value = DE; $('#dt-ate').value = ATE;
+    $('#dt-aviso').classList.add('hidden');
+    render();
+  });
+
+  $('#btn-tema').addEventListener('click', () => {
+    const dark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('bf26-tema', dark ? 'dark' : 'light'); } catch(e){}
+    render();   // Chart.js lê a cor na construção: sem redesenhar, o gráfico fica com a cor antiga
+  });
+  $('#btn-refresh').addEventListener('click', () => boot(true));
+}
+
+/* ======================= BOOT ======================= */
+async function boot(fresh){
+  const btn = $('#btn-refresh');
+  if (btn) btn.disabled = true;
+  $('#lido').textContent = 'lendo…'; $('#lido').className = 'lido';
+  try {
+    const r = await fetch(urlFonte(fresh), { cache:'no-store' });
+    if (!r.ok) throw new Error(`O Worker respondeu ${r.status}`);
+    const d = await r.json();
+    if (d.error) throw new Error(d.error);
+    BRUTO = d;
+    preparar(d);
+
+    if (!MIDIA.length && !PEDIDOS.length)
+      throw new Error('A planilha foi lida, mas não há linha de mídia com a tag [BLACK FRIDAY 26] nem pedido da oferta Black Novembro - 2026.');
+
+    $('#loading').classList.add('hidden');
+    $('#erro').classList.add('hidden');
+    $('#app').classList.remove('hidden');
+    renderBanners();
+    render();
+    $('#lido').textContent = 'atualizado'; $('#lido').className = 'lido ok';
+  } catch (err) {
+    /* Erro na tela, não só no console: sem isso a página fica num "carregando" eterno
+       e ninguém sabe se é o Worker, a planilha ou a internet. */
+    $('#loading').classList.add('hidden');
+    $('#app').classList.add('hidden');
+    $('#erro').classList.remove('hidden');
+    $('#erro').textContent = 'Não consegui carregar os dados: ' + err.message;
+    $('#lido').textContent = 'falhou'; $('#lido').className = 'lido falha';
+    console.error('[BF26]', err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+try { if (localStorage.getItem('bf26-tema') === 'dark') document.documentElement.classList.add('dark'); } catch(e){}
+ligarControles();
+boot(false);
+</script>
+</body>
+</html>
