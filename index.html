@@ -614,13 +614,24 @@ function renderMidia(mid, ped){
   const imp = soma(mid, m => m.impressoes);
   const cli = soma(mid, m => m.cliques);
   const chk = soma(mid, m => m.checkouts);
-  const pagos = ped.filter(p => p.final === 'pago').length;
+
+  /* A conversão compara só o que é comparável: venda feita A PARTIR do primeiro dia
+     de mídia. Venda anterior aos anúncios nunca passou por esse checkout do pixel —
+     incluí-la dava "100% de conversão" num dia em que a maioria das vendas veio de
+     lista/orgânico, o que leria como mídia perfeita. */
+  const iniMidia = mid.map(m => m.dia).sort()[0];
+  const pagos = ped.filter(p => p.final === 'pago');
+  const pagosNaMidia = iniMidia ? pagos.filter(p => p.dia >= iniMidia) : pagos;
+  const forasDaJanela = pagos.length - pagosNaMidia.length;
 
   set('k-cpm', nOrDash(div(inv, imp/1000), brl), `${num(imp)} impressões`);
   set('k-ctr', pctFino(cli, imp), `${num(cli)} cliques no link`);
   set('k-cpc', nOrDash(div(inv, cli), brl), cli ? 'investimento ÷ cliques' : 'sem clique');
   set('k-cpi', nOrDash(div(inv, chk), brl), `${num(chk)} checkout(s) iniciado(s) · pixel`);
-  set('k-conv', pctFino(pagos, chk), chk ? `${num(pagos)} venda(s) paga(s) ÷ ${num(chk)} checkout(s)` : 'sem checkout no pixel');
+  set('k-conv', pctFino(pagosNaMidia.length, chk),
+      !chk ? 'sem checkout no pixel'
+           : `${num(pagosNaMidia.length)} venda(s) ÷ ${num(chk)} checkout(s)`
+             + (forasDaJanela ? ` · ${num(forasDaJanela)} venda(s) anterior(es) à mídia fora da conta` : ''));
 }
 
 /* ======================= FUNIL ======================= */
